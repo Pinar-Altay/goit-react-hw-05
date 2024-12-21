@@ -1,17 +1,21 @@
-.nav {
+.navBox {
   display: flex;
-  gap: 20px;
-  padding: 10px;
-  border-bottom: 2px solid #ccc;
+  padding: 20px 30px;
+  gap: 15px;
+  box-shadow: 0 4px 10px -5px;
 }
 
-.link {
+.navBox a {
   text-decoration: none;
-  color: black;
-  font-size: 20px;
+  color: var(--black);
+  font-size: 22px;
 }
 
-.active {
-  color: #901E1E;
-  font-weight: bold;
+.navBox a:hover {
+  text-decoration: underline;
+  color: var(--red);
+}
+
+.navBox .active {
+  color: var(--red);
 }

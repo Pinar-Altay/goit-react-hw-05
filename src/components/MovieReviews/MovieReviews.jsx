@@ -1,53 +1,55 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';  
-import { fetchMovieReviews } from '../../service/api';
-import css from './MovieReviews.module.css';
+import { useParams } from 'react-router-dom';
+import { getReviewById } from '../../services/movieAPI';
+import s from './MovieReviews.module.css';
+import Loader from '../../components/Loader/Loader';
+import ErrorMessage from '../../components/ErrorMessage/ErrorMessage';
 
 const MovieReviews = () => {
-  const { movieId } = useParams();  
+  const { movieId } = useParams();
   const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    const getReviews = async () => {
-      if (!movieId) {
-        setError('Movie ID is not available');
-        setLoading(false);
-        return;
-      }
-      console.log('Fetching reviews for movieId:', movieId);  
+    if (!movieId) return;
+
+    const getMovieCast = async () => {
       try {
-        const reviewsData = await fetchMovieReviews(movieId);
-        console.log('Fetched reviews data:', reviewsData);  
-        setReviews(reviewsData);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching reviews:', err);  
-        setError('Failed to load reviews');
-        setLoading(false);
+        setIsError(false);
+        setIsLoading(true);
+        const data = await getReviewById(movieId);
+        setReviews(data);
+      } catch (error) {
+        setIsError(true);
+        console.error(error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    getReviews();
-  }, [movieId]);  
-
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>{error}</p>;
+    getMovieCast();
+  }, [movieId]);
 
   return (
-    <div className={css.reviewsContainer}>
-      {reviews.length > 0 ? (
-        reviews.map((review) => (
-          <div key={review.id} className={css.review}>
-            <h3>{review.author}</h3>
-            <p>{review.content}</p>
-          </div>
-        ))
-      ) : (
-        <p>No reviews available.</p>
-      )}
-    </div>
+    <>
+      {reviews.length === 0 && <p>we don`t have any reviews for this movie.</p>}
+      {
+        <ul>
+          {reviews.map(review => (
+            <li className={s.review} key={review.id}>
+              <p className={s.author}>
+                <span>Author:</span>
+                {review.author}
+              </p>
+              <p>{review.content}</p>
+            </li>
+          ))}
+        </ul>
+      }
+      {isError && <ErrorMessage />}
+      {isLoading && <Loader />}
+    </>
   );
 };
 

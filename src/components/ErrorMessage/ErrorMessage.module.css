@@ -1,0 +1,6 @@
+.error {
+  color: var(--red);
+  display: flex;
+  font-size: 38px;
+  justify-content: center;
+}

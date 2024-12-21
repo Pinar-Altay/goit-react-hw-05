@@ -1,69 +1,62 @@
-import { useParams, Link, Outlet, NavLink } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { fetchMovieDetails } from '../../service/api';
-import css from './MovieDetailsPage.module.css';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { Link, Outlet, useLocation, useParams } from 'react-router-dom';
+import { getMovieById } from '../../services/movieAPI';
+import MovieDetails from '../../components/MovieDetails/MovieDetails';
+import Loader from '../../components/Loader/Loader';
+import ErrorMessage from '../../components/ErrorMessage/ErrorMessage';
+import s from './MovieDetailsPage.module.css';
 
 const MovieDetailsPage = () => {
   const { movieId } = useParams();
-  const [movie, setMovie] = useState(null);
-  const [error, setError] = useState(null);
+  const [movieData, setMovieData] = useState();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const location = useLocation();
+  const goBackLink = useRef(location.state ?? '/');
 
   useEffect(() => {
-    const getMovieDetails = async () => {
+    if (!movieId) return;
+
+    const getMovie = async () => {
       try {
-        const movieData = await fetchMovieDetails(movieId);
-        setMovie(movieData);
-      } catch (err) {
-        setError('Failed to fetch movie details');
+        setIsError(false);
+        setIsLoading(true);
+        const data = await getMovieById(movieId);
+        setMovieData(data);
+      } catch (error) {
+        setIsError(true);
+        console.error(error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    getMovieDetails();
+    getMovie();
   }, [movieId]);
 
-  if (error) return <p>{error}</p>;
-  if (!movie) return <p>Loading...</p>;
-
   return (
-    <div className={css.container}>
-      <button className={css.goBack}>
-        <Link to="/">Go back</Link>
-      </button>
-      <div className={css.details}>
-        <img
-          src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-          alt={movie.title}
-          className={css.poster}
-        />
-        <div>
-          <h2 className={css.title}>{movie.title} ({movie.release_date.split('-')[0]})</h2>
-          <p className={css.score}>User Score: {movie.vote_average * 10}%</p>
-          <h3 className={css.subtitle}>Overview</h3>
-          <p className={css.overview}>{movie.overview}</p>
-          <h3 className={css.subtitle}>Genres</h3>
-          <p>{movie.genres.map(genre => genre.name).join(', ')}</p>
-        </div>
-      </div>
-
-      <div className={css.additional}>
-        <h4>Additional information</h4>
-        <ul>
-          <li>
-            <NavLink to="cast" className={({ isActive }) => (isActive ? css.activeLink : css.link)}>
-              Cast
-            </NavLink>
-          </li>
-          <li>
-            <NavLink to="reviews" className={({ isActive }) => (isActive ? css.activeLink : css.link)}>
-              Reviews
-            </NavLink>
-          </li>
-        </ul>
-      </div>
-      <Outlet />
-    </div>
+    <>
+      <Link className={s.goBtn} to={goBackLink.current}>
+        Go back
+      </Link>
+      {movieData && <MovieDetails movieData={movieData} />}
+      <h3>Additional information</h3>
+      <ul>
+        <li>
+          <Link to="cast">Cast</Link>
+        </li>
+        <li>
+          <Link to="reviews">Reviews</Link>
+        </li>
+      </ul>
+      <hr />
+      <Suspense fallback={<p>Loading...</p>}>
+        <Outlet />
+      </Suspense>
+      {isError && <ErrorMessage />}
+      {isLoading && <Loader />}
+    </>
   );
 };
 
 export default MovieDetailsPage;
-

@@ -1,0 +1,18 @@
+:root {
+  --black: #1a1a1a;
+  --red: #cf222e;
+  --lightGrey: #f2f2f2;
+  --lightHover: #f7f7f7;
+
+  line-height: 1.5;
+  font-weight: 00;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+  padding: 10px 20px;
+}

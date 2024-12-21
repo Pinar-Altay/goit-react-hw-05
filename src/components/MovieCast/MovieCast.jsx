@@ -1,58 +1,65 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';  
-import { fetchMovieCast } from '../../service/api';
-import css from './MovieCast.module.css';
+import { useParams } from 'react-router-dom';
+import { getCastById } from '../../services/movieAPI';
+import s from './MovieCast.module.css';
+import Loader from '../../components/Loader/Loader';
+import ErrorMessage from '../../components/ErrorMessage/ErrorMessage';
 
 const MovieCast = () => {
-  const { movieId } = useParams();  
-  const [cast, setCast] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { movieId } = useParams();
+  const [casts, setCasts] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const defaultImg =
+    'https://dummyimage.com/100x150/cdcdcd/000.jpg&text=No+poster';
 
   useEffect(() => {
-    const getCast = async () => {
-      if (!movieId) {
-        setError('Movie ID is not available');
-        setLoading(false);
-        return;
-      }
-      console.log('Fetching cast for movieId:', movieId);  
+    if (!movieId) return;
+
+    const getMovieCast = async () => {
       try {
-        const castData = await fetchMovieCast(movieId);
-        console.log('Fetched cast data:', castData);  
-        setCast(castData);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching cast:', err);  
-        setError('Failed to load cast');
-        setLoading(false);
+        setIsError(false);
+        setIsLoading(true);
+        const data = await getCastById(movieId);
+        setCasts(data);
+      } catch (error) {
+        setIsError(true);
+        console.error(error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    getCast();
-  }, [movieId]);  
-
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>{error}</p>;
+    getMovieCast();
+  }, [movieId]);
 
   return (
-    <ul className={css.castList}>
-      {cast.length > 0 ? (
-        cast.map((actor) => (
-          <li key={actor.id} className={css.castItem}>
-            <img
-              src={`https://image.tmdb.org/t/p/w500${actor.profile_path}`}
-              alt={actor.name}
-              className={css.actorImage}
-            />
-            <p>{actor.name}</p>
-            <p>{actor.character}</p>
+    <>
+      <ul className={s.casts}>
+        {casts.map(cast => (
+          <li key={cast.id}>
+            <p>
+              <img
+                src={
+                  cast.profile_path
+                    ? `https://image.tmdb.org/t/p/w500${cast.profile_path}`
+                    : defaultImg
+                }
+                alt="actor"
+              />
+            </p>
+            <p>
+              <span>Actor:</span> {cast.name}
+            </p>
+            <p>
+              <span>Character:</span> {cast.character}
+            </p>
           </li>
-        ))
-      ) : (
-        <p>No cast available.</p>
-      )}
-    </ul>
+        ))}
+      </ul>
+      {isError && <ErrorMessage />}
+      {isLoading && <Loader />}
+    </>
   );
 };
 

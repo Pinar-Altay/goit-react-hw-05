@@ -1,44 +1,38 @@
-import { useState, useEffect } from 'react';
-import { fetchTrendingMovies } from '../../service/api';
 import MovieList from '../../components/MovieList/MovieList';
-import css from './HomePage.module.css';
+import { useState, useEffect } from 'react';
+import { getTrending } from '../../services/movieAPI';
+import Loader from '../../components/Loader/Loader';
+import ErrorMessage from '../../components/ErrorMessage/ErrorMessage';
 
 const HomePage = () => {
   const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     const getMovies = async () => {
-      setLoading(true);
       try {
-        const trendingMovies = await fetchTrendingMovies();
-        setMovies(trendingMovies);
-      } catch (err) {
-        setError(err.message);
+        setIsError(false);
+        setIsLoading(true);
+        const data = await getTrending();
+        setMovies(data);
+      } catch (error) {
+        setIsError(true);
+        console.error(error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
+
     getMovies();
   }, []);
 
-  if (loading) {
-    return <p>Loading trending movies...</p>;
-  }
-
-  if (error) {
-    return <p>Error: {error}</p>;
-  }
-
   return (
-    <div className={css.container}>
-      <h1 className={css.title}>Trending today</h1>
-      {movies.length > 0 ? (
-        <MovieList movies={movies} />
-      ) : (
-        <p className={css.noMovies}>No trending movies available at the moment.</p>
-      )}
+    <div>
+      <h2>Trending today</h2>
+      <MovieList movies={movies} />
+      {isError && <ErrorMessage />}
+      {isLoading && <Loader />}
     </div>
   );
 };
